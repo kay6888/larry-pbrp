@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: write
     env:
-      MANIFEST_URL: https://github.com/nicklasehs/pbrp-manifest.git
+      MANIFEST_URL: https://github.com/PitchBlackRecoveryProject/manifest_pb.git
       MANIFEST_BRANCH: ${{ github.event.inputs.MANIFEST_BRANCH }}
       DEVICE_TREE_URL: https://github.com/${{ github.repository }}
       DEVICE_TREE_BRANCH: ${{ github.ref_name }}
