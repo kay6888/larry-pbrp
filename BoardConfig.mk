@@ -39,10 +39,13 @@ BOARD_TAGS_OFFSET := 0x00000100
 BOARD_DTB_OFFSET := 0x01f00000
 
 BOARD_KERNEL_CMDLINE := \
+    console=ttyMSM0,115200n8 \
+    earlycon=msm_geni_serial,0x04C8C000 \
     androidboot.hardware=qcom \
     androidboot.console=ttyMSM0 \
     androidboot.memcg=1 \
     lpm_levels.sleep_disabled=1 \
+    video=vfb:640x400,bpp=32,memsize=3072000 \
     msm_rtb.filter=0x237 \
     service_locator.enable=1 \
     androidboot.usbcontroller=4e00000.dwc3 \
@@ -51,12 +54,13 @@ BOARD_KERNEL_CMDLINE := \
     cgroup.memory=nokmem,nosocket \
     iptable_raw.raw_before_defrag=1 \
     ip6table_raw.raw_before_defrag=1 \
-    firmware_class.path=/vendor/firmware_mnt/image
+    kpti=off
 
 BOARD_KERNEL_IMAGE_NAME := Image
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
 BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
 BOARD_PREBUILT_DTBIMAGE_DIR := $(DEVICE_PATH)/prebuilt/dtbs
+TARGET_PREBUILT_DTB := $(DEVICE_PATH)/prebuilt/dtb
 
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 BOARD_MKBOOTIMG_ARGS += --pagesize $(BOARD_KERNEL_PAGESIZE)
@@ -150,8 +154,13 @@ TW_BACKUP_EXCLUSIONS := /data/fonts
 TW_EXCLUDE_APEX := true
 TARGET_USES_MKE2FS := true
 
-# Vendor modules to load in recovery (adjust based on your vendor_boot)
-TW_LOAD_VENDOR_MODULES := "adsp_loader_dlkm.ko qti_battery_charger.ko"
+# Vendor ramdisk modules (extracted from stock vendor_boot.img)
+TW_LOAD_VENDOR_MODULES := "qcom_glink_native.ko qcom_glink_smem.ko qcom_glink_rpm.ko \
+    smem.ko gcc-holi.ko pinctrl-holi.ko pinctrl-msm.ko clk-qcom.ko clk-smd-rpm.ko \
+    icc-rpm.ko qnoc-holi.ko qnoc-qos.ko qcom_ipcc.ko qcom_hwspinlock.ko \
+    phy-qcom-ufs.ko phy-qcom-ufs-qmp-v4-yupik.ko ufs-qcom.ko ufshcd-crypto-qti.ko \
+    crypto-qti-common.ko crypto-qti-hwkm.ko hwkm.ko secure_buffer.ko \
+    rpm-smd.ko rpm-smd-regulator.ko qpnp-power-on.ko sdhci-msm.ko"
 
 # PBRP flags
 PB_DISABLE_DEFAULT_DM_VERITY := true
