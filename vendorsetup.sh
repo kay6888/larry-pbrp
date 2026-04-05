@@ -1,0 +1,3 @@
+add_lunch_combo twrp_larry-user
+add_lunch_combo twrp_larry-userdebug
+add_lunch_combo twrp_larry-eng

@@ -1,0 +1,34 @@
+# Android fstab file - OnePlus Nord N30 5G (larry)
+# mount point       fs type     device                                            flags
+
+# Physical partitions
+/boot               emmc        /dev/block/bootdevice/by-name/boot                flags=display="Boot";backup=1;flashimg=1
+/vendor_boot        emmc        /dev/block/bootdevice/by-name/vendor_boot         flags=display="Vendor Boot";backup=1;flashimg=1
+/dtbo               emmc        /dev/block/bootdevice/by-name/dtbo                flags=display="DTBO";backup=1;flashimg=1
+/misc               emmc        /dev/block/bootdevice/by-name/misc
+
+# Userdata (FBE encrypted with hardware-wrapped keys)
+/data               f2fs        /dev/block/bootdevice/by-name/userdata            flags=fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized+wrappedkey_v0,metadata_encryption=aes-256-xts:wrappedkey_v0,keydirectory=/metadata/vold/metadata_encryption
+
+# Metadata
+/metadata           ext4        /dev/block/bootdevice/by-name/metadata            flags=display="Metadata";wrappedkey
+
+# Persist / EFS
+/persist            ext4        /dev/block/bootdevice/by-name/persist             flags=display="Persist";backup=1
+/firmware           vfat        /dev/block/bootdevice/by-name/modem               flags=display="Firmware";backup=1;mounttodecrypt
+/efs1               emmc        /dev/block/bootdevice/by-name/modemst1            flags=display="EFS";backup=1
+/efs2               emmc        /dev/block/bootdevice/by-name/modemst2            flags=backup=1;subpartitionof=/efs1
+
+# Super partition (for full image flash)
+/super              emmc        /dev/block/bootdevice/by-name/super               flags=display="Super";backup=1;flashimg=1
+
+# Dynamic / Logical partitions
+/system             ext4        /dev/block/mapper/system                          flags=display="System";logical;backup=1
+/system_ext         ext4        /dev/block/mapper/system_ext                      flags=display="System EXT";logical;backup=1
+/vendor             ext4        /dev/block/mapper/vendor                          flags=display="Vendor";logical;backup=1
+/product            ext4        /dev/block/mapper/product                         flags=display="Product";logical;backup=1
+/odm                ext4        /dev/block/mapper/odm                             flags=display="ODM";logical;backup=1
+
+# Removable storage
+/external_sd        auto        /dev/block/mmcblk1p1    /dev/block/mmcblk1        flags=display="MicroSD";storage;wipeingui;removable
+/usb_otg            auto        /dev/block/sdd1         /dev/block/sdd            flags=display="USB OTG";storage;wipeingui;removable
