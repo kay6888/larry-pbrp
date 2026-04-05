@@ -1,0 +1,160 @@
+name: Build PBRP Recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      MANIFEST_BRANCH:
+        description: 'PBRP manifest branch'
+        required: true
+        default: 'android-12.1'
+        type: choice
+        options:
+          - android-12.1
+          - android-11.0
+          - android-14.0
+
+jobs:
+  build:
+    name: Build PBRP for larry
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      MANIFEST_URL: https://github.com/nicklasehs/pbrp-manifest.git
+      MANIFEST_BRANCH: ${{ github.event.inputs.MANIFEST_BRANCH }}
+      DEVICE_TREE_URL: https://github.com/${{ github.repository }}
+      DEVICE_TREE_BRANCH: ${{ github.ref_name }}
+      DEVICE_PATH: device/oneplus/larry
+      DEVICE_NAME: larry
+      MAKEFILE_NAME: twrp_larry
+      BUILD_TARGET: bootimage
+
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 4096
+          swap-size-mb: 8192
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
+
+      - name: Check available space
+        run: |
+          echo "Free space:"
+          df -h /
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            bc bison build-essential ccache curl flex \
+            g++-multilib gcc-multilib git git-lfs gnupg gperf \
+            imagemagick lib32readline-dev lib32z1-dev \
+            liblz4-tool libncurses5 libncurses5-dev \
+            libsdl1.2-dev libssl-dev libwxgtk3.0-gtk3-dev \
+            libxml2 libxml2-utils lzop pngcrush \
+            rsync schedtool squashfs-tools xsltproc \
+            zip zlib1g-dev python3 python-is-python3 \
+            repo
+
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Configure git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git config --global color.ui false
+
+      - name: Initialize PBRP manifest
+        run: |
+          mkdir workspace
+          cd workspace
+          repo init --depth=1 -u $MANIFEST_URL -b $MANIFEST_BRANCH
+        id: pwd
+
+      - name: Sync PBRP source
+        run: |
+          cd workspace
+          repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
+
+      - name: Clone device tree
+        run: |
+          cd workspace
+          git clone $DEVICE_TREE_URL -b $DEVICE_TREE_BRANCH $DEVICE_PATH
+
+      - name: Set swap space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 12
+
+      - name: Enable ccache
+        run: |
+          echo "USE_CCACHE=1" >> $GITHUB_ENV
+          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
+          echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+          ccache -M 5G
+          ccache -o compression=true
+
+      - name: Build PBRP recovery
+        run: |
+          cd workspace
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch ${MAKEFILE_NAME}-eng
+          mka pbrp -j$(nproc --all)
+
+      - name: Find build output
+        id: output
+        run: |
+          cd workspace
+          echo "Build output files:"
+          find out/target/product/$DEVICE_NAME -maxdepth 1 -name "*.img" -o -name "*.zip" | tee /tmp/build_files
+          if [ -s /tmp/build_files ]; then
+            echo "date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=fail" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Upload recovery image
+        if: steps.output.outputs.status == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: PBRP-larry-${{ steps.output.outputs.date }}
+          path: |
+            workspace/out/target/product/${{ env.DEVICE_NAME }}/PBRP*.zip
+            workspace/out/target/product/${{ env.DEVICE_NAME }}/boot.img
+            workspace/out/target/product/${{ env.DEVICE_NAME }}/vendor_boot.img
+          retention-days: 7
+
+      - name: Create release
+        if: steps.output.outputs.status == 'success'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pbrp-${{ steps.output.outputs.date }}
+          name: PBRP Recovery - larry - ${{ steps.output.outputs.date }}
+          body: |
+            ## PitchBlack Recovery for OnePlus Nord N30 5G (larry)
+            - **Manifest:** ${{ env.MANIFEST_BRANCH }}
+            - **Platform:** Qualcomm SM6375 (holi)
+            - **Build date:** ${{ steps.output.outputs.date }}
+
+            ### Flash instructions
+            ```
+            fastboot flash boot boot.img
+            ```
+            Or flash the PBRP zip from an existing custom recovery.
+          files: |
+            workspace/out/target/product/${{ env.DEVICE_NAME }}/PBRP*.zip
+            workspace/out/target/product/${{ env.DEVICE_NAME }}/boot.img
+          draft: false
+          prerelease: false
