@@ -1,3 +1,2 @@
-add_lunch_combo twrp_larry-user
-add_lunch_combo twrp_larry-userdebug
-add_lunch_combo twrp_larry-eng
+# vendorsetup.sh is intentionally empty
+# Lunch choices are defined in AndroidProducts.mk via COMMON_LUNCH_CHOICES
