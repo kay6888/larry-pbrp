@@ -66,7 +66,8 @@ TARGET_PREBUILT_DTB := $(DEVICE_PATH)/prebuilt/dtb
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 BOARD_MKBOOTIMG_ARGS += --pagesize $(BOARD_KERNEL_PAGESIZE)
 
-BOARD_INCLUDE_DTB_IN_BOOTIMG := true
+# DTB is in vendor_boot for boot header v3, not boot.img
+BOARD_INCLUDE_DTB_IN_BOOTIMG := false
 
 # A/B
 AB_OTA_UPDATER := true
@@ -87,8 +88,8 @@ BOARD_USES_RECOVERY_AS_BOOT := true
 
 # Partitions
 BOARD_FLASH_BLOCK_SIZE := 262144
-BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
-BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 100663296
+BOARD_BOOTIMAGE_PARTITION_SIZE := 167772160
+BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 167772160
 BOARD_DTBOIMAGE_PARTITION_SIZE := 25165824
 
 # Super / Dynamic Partitions
@@ -159,13 +160,19 @@ TW_BACKUP_EXCLUSIONS := /data/fonts
 TW_EXCLUDE_APEX := true
 TARGET_USES_MKE2FS := true
 
-# Vendor ramdisk modules (extracted from stock vendor_boot.img)
-TW_LOAD_VENDOR_MODULES := "qcom_glink_native.ko qcom_glink_smem.ko qcom_glink_rpm.ko \
-    smem.ko gcc-holi.ko pinctrl-holi.ko pinctrl-msm.ko clk-qcom.ko clk-smd-rpm.ko \
-    icc-rpm.ko qnoc-holi.ko qnoc-qos.ko qcom_ipcc.ko qcom_hwspinlock.ko \
-    phy-qcom-ufs.ko phy-qcom-ufs-qmp-v4-yupik.ko ufs-qcom.ko ufshcd-crypto-qti.ko \
-    crypto-qti-common.ko crypto-qti-hwkm.ko hwkm.ko secure_buffer.ko \
-    rpm-smd.ko rpm-smd-regulator.ko qpnp-power-on.ko sdhci-msm.ko"
+# Vendor ramdisk modules (complete list from stock vendor_boot, dependency-ordered)
+TW_LOAD_VENDOR_MODULES := "proxy-consumer.ko qpnp-power-on.ko _qcom_scm.ko mpm.ko \
+    iommu-logger.ko qmi_helpers.ko rpm-smd.ko qnoc-qos.ko qcom_hwspinlock.ko \
+    phy-qcom-ufs.ko cqhci-crypto.ko smem.ko hwkm.ko pinctrl-msm.ko \
+    qcom_ipcc.ko stub-regulator.ko \
+    clk-qcom.ko subsystem_restart.ko msm-poweroff.ko memory_dump_v2.ko \
+    secure_buffer.ko icc-rpm.ko rpm-smd-regulator.ko refgen.ko \
+    phy-qcom-ufs-qmp-v3.ko phy-qcom-ufs-qmp-v4-yupik.ko phy-qcom-ufs-qrbtc-sdm845.ko \
+    crypto-qti-hwkm.ko pinctrl-holi.ko pinctrl-blair.ko cqhci.ko \
+    clk-dummy.ko gcc-holi.ko gcc-blair.ko qcom_glink_native.ko \
+    crypto-qti-common.ko qcom-arm-smmu-mod.ko clk-smd-rpm.ko qnoc-holi.ko \
+    qcom_glink_smem.ko qcom_glink_rpm.ko ufshcd-crypto-qti.ko cqhci-crypto-qti.ko \
+    ufs-qcom.ko sdhci-msm.ko"
 
 # PBRP flags
 PB_DISABLE_DEFAULT_DM_VERITY := true
