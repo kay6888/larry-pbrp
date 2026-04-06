@@ -48,7 +48,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
-            bc bison build-essential ccache curl flex \
+            bc bison build-essential curl flex \
             g++-multilib gcc-multilib git git-lfs gnupg gperf \
             imagemagick lib32z1-dev liblz4-tool \
             libncurses6 libncurses-dev libssl-dev \
@@ -90,19 +90,11 @@ jobs:
         with:
           swap-size-gb: 12
 
-      - name: Enable ccache
-        run: |
-          echo "USE_CCACHE=1" >> $GITHUB_ENV
-          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
-          echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
-          mkdir -p ${{ github.workspace }}/.ccache
-          ccache -M 5G
-          ccache -o compression=true
-
       - name: Build PBRP recovery
         run: |
           cd workspace
           export ALLOW_MISSING_DEPENDENCIES=true
+          export USE_CCACHE=0
           source build/envsetup.sh
           lunch ${MAKEFILE_NAME}-eng
           mka pbrp -j$(nproc --all)
