@@ -1,6 +1,17 @@
 name: Build PBRP Recovery
 
 on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'BoardConfig.mk'
+      - 'device.mk'
+      - 'twrp_larry.mk'
+      - 'AndroidProducts.mk'
+      - 'recovery.fstab'
+      - 'prebuilt/**'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
     inputs:
       MANIFEST_BRANCH:
@@ -22,7 +33,7 @@ jobs:
       contents: write
     env:
       MANIFEST_URL: https://github.com/PitchBlackRecoveryProject/manifest_pb.git
-      MANIFEST_BRANCH: ${{ github.event.inputs.MANIFEST_BRANCH }}
+      MANIFEST_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.MANIFEST_BRANCH || 'android-12.1' }}
       DEVICE_TREE_URL: https://github.com/${{ github.repository }}
       DEVICE_TREE_BRANCH: ${{ github.ref_name }}
       DEVICE_PATH: device/oneplus/larry
